@@ -1,0 +1,2 @@
+# meanoji
+Emoji meaning application
