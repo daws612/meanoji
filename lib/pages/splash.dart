@@ -9,8 +9,10 @@ class Splash extends StatefulWidget {
 
   void onLoad(BuildContext context) async {
     openEmojiDetailsFuture().then((value) {
-      //ew EmojiDetails();
-      Navigator.of(context).push(_createRoute());
+       Navigator.pushReplacement(context, _createRoute());
+      
+      // Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => EmojiDetails()));
+      // Navigator.of(context).push(_createRoute());
     }, onError: (error) {
       print(error);
     }).timeout(Duration(seconds: 6), onTimeout: () {
