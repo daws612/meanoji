@@ -1,4 +1,4 @@
-package com.example.meanoji
+package com.msupa.meanoji
 
 import android.os.Bundle
 

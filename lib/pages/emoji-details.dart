@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:meanoji/pages/EmojiSearchDelegate.dart';
+import 'emoji-search-delegate.dart';
 
 class EmojiDetails extends StatefulWidget {
   @override
