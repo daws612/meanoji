@@ -20,6 +20,11 @@ class MyApp extends StatelessWidget {
         // Notice that the counter didn't reset back to zero; the application
         // is not restarted.
         primarySwatch: Colors.purple,
+        //primaryTextTheme: TextTheme(title: TextStyle(color: Colors.white)),
+        //textTheme: Theme.of(context).textTheme.apply(
+          //bodyColor: Colors.white,
+          //displayColor: Colors.white,
+        //),
       ),
       home: Splash(),
     );

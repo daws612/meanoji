@@ -76,10 +76,7 @@ class EmojiDetailsState extends State<EmojiDetails> {
                 IconButton(
                   icon: Icon(Icons.search),
                   onPressed: () {
-                    showSearch(
-                      context: context,
-                      delegate: EmojiSearchDelegate(),
-                    );
+                    showSearchPage(context, EmojiSearchDelegate());
                   },
                 ),
               ],
@@ -135,5 +132,26 @@ class EmojiDetailsState extends State<EmojiDetails> {
 
   void _savecomment(String comment, DocumentSnapshot snapshot) {
     FirebaseService().saveComment(comment, snapshot.data["unicode"]);
+  }
+
+  //Shows Search result
+  void showSearchPage(BuildContext context, EmojiSearchDelegate searchDelegate) async {
+    
+    final DocumentSnapshot selected = await showSearch<DocumentSnapshot>(
+      context: context,
+      delegate: searchDelegate,
+    );
+
+    if (selected != null) {
+      String code = selected.data['code'];
+      Scaffold.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Your Word Choice: $code'),
+        ),
+      );
+      setState(() {
+        this.snapshot = selected;
+      });
+    }
   }
 }

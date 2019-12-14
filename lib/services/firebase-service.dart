@@ -72,4 +72,10 @@ class FirebaseService {
       snapshot.documents.forEach((f) => print('${f.data}}'));
     });
   }
+
+  Future<DocumentSnapshot> getEmojiDetails(DocumentSnapshot a) async{
+    CollectionReference emojisdb = databaseReference.collection("emojis");
+    DocumentSnapshot snapshot = await emojisdb.document(a.documentID).get();
+    return snapshot;
+  }
 }
