@@ -82,7 +82,7 @@ class SplashState extends State<Splash> {
         if (value != null)
           Navigator.pushReplacement(context, _createRoute(true));
         else
-          showIt(context);
+          showIt(context, true);
       });
 
       // Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => EmojiDetails()));
@@ -107,7 +107,7 @@ class SplashState extends State<Splash> {
   Route _createRoute(bool hasUsername) {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) =>
-          hasUsername ? EmojiDetails() : showIt(context),
+          hasUsername ? EmojiDetails() : showIt(context, true),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         var begin = Offset(0.0, 1.0);
         var end = Offset.zero;
@@ -124,7 +124,7 @@ class SplashState extends State<Splash> {
     );
   }
 
-  Future showIt(BuildContext context) {
+  static Future showIt(BuildContext context, bool onSplash) {
     return showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -141,7 +141,7 @@ class SplashState extends State<Splash> {
                 ),
                 elevation: 3,
                 child: Center(
-                  child: SignupDialogContent(),
+                  child: SignupDialogContent(isOnSplash: onSplash),
                 )));
       },
       pageBuilder: (BuildContext context, Animation animation,

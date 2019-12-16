@@ -5,8 +5,9 @@ import 'package:meanoji/services/firebase-service.dart';
 
 class SignupDialogContent extends StatefulWidget {
   SignupDialogContent({
-    Key key,
+    Key key, this.isOnSplash
   }) : super(key: key);
+  final bool isOnSplash;
 
   @override
   _SignupDialogContentState createState() => new _SignupDialogContentState();
@@ -88,9 +89,6 @@ class _SignupDialogContentState extends State<SignupDialogContent> {
           onChanged: (value) {
             username = value;
           },
-          // validator: (usernameValue) =>
-          //     usernameValue.isEmpty ? 'Username cannot be empty' : null,
-          // onSaved: (usernameValue) => username = usernameValue.trim(),
         ),
       ),
     );
@@ -114,9 +112,6 @@ class _SignupDialogContentState extends State<SignupDialogContent> {
           onChanged: (value) {
             email = value;
           },
-          // validator: (emailValue) =>
-          //     emailValue.isEmpty ? 'Email cannot be empty' : null,
-          // onSaved: (emailValue) => email = emailValue.trim(),
         ),
       ),
     );
@@ -174,7 +169,8 @@ class _SignupDialogContentState extends State<SignupDialogContent> {
 
   void enterAppFromDialog(BuildContext context) {
     Navigator.of(context, rootNavigator: true).pop();
-    Navigator.pushReplacement(context, _createRoute(true));
+    if(widget.isOnSplash)
+      Navigator.pushReplacement(context, _createRoute(true));
   }
 
   Route _createRoute(bool hasUsername) {

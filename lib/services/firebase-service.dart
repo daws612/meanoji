@@ -4,7 +4,7 @@ import 'package:meanoji/services/meanoji-shared-preferences.dart';
 class FirebaseService {
   final databaseReference = Firestore.instance;
 
-  Future<DocumentSnapshot> getEmoji() async{
+  Future<DocumentSnapshot> getEmoji() async {
     CollectionReference emojisdb = databaseReference.collection("emojis");
     // String randomID = emojisdb.document().documentID;
     // await emojisdb.document(randomID).get().then((DocumentSnapshot snapshot) {
@@ -13,28 +13,31 @@ class FirebaseService {
     //   else
     //     print(snapshot.data);
     // });
-    DocumentSnapshot snapshot = await emojisdb.document("1WNFqYSsLHFsRttuuqoV").get();
+    DocumentSnapshot snapshot =
+        await emojisdb.document("1WNFqYSsLHFsRttuuqoV").get();
     return snapshot;
-        //.then((DocumentSnapshot snapshot) {
-          //print(snapshot.data);
-      //snapshot.documents.forEach((f) => print('${f.data}}'));
-   // });
+    //.then((DocumentSnapshot snapshot) {
+    //print(snapshot.data);
+    //snapshot.documents.forEach((f) => print('${f.data}}'));
+    // });
   }
 
-  void saveComment(String comment, String emojiUniCode) async {
+  void saveComment(
+      String comment, String emojiUniCode, String emojiDocumentID) async {
     //This creates random document id
     DocumentReference ref = await databaseReference.collection("comments").add({
+      'emojiID': emojiDocumentID,
       'unicode': emojiUniCode,
       'comment': comment,
       'createdAt': DateTime.now().toUtc().millisecondsSinceEpoch,
-      'username' : MeanojiPreferences.getUserName()
+      'username': await MeanojiPreferences.getUserName()
     });
     print(ref.documentID);
   }
 
   Future<bool> saveUser(String userName, String email) async {
     //This creates random document id
-    if(userName == null || email == null || userName.isEmpty || email.isEmpty)
+    if (userName == null || email == null || userName.isEmpty || email.isEmpty)
       return false;
     DocumentReference ref = await databaseReference.collection("users").add({
       'username': userName,
@@ -42,7 +45,7 @@ class FirebaseService {
       'createdAt': DateTime.now().toUtc().millisecondsSinceEpoch,
     });
     print(ref.documentID);
-    if(ref.documentID != null) {
+    if (ref.documentID != null) {
       MeanojiPreferences.setUserName(userName);
       return true;
     }
@@ -64,16 +67,15 @@ class FirebaseService {
     //print(ref.documentID);
   }
 
-  void getData() {
-    databaseReference
+  Future<QuerySnapshot> getCommentsForEmoji(String emojiID) async {
+    QuerySnapshot snapshot = await databaseReference
         .collection("comments")
-        .getDocuments()
-        .then((QuerySnapshot snapshot) {
-      snapshot.documents.forEach((f) => print('${f.data}}'));
-    });
+        .where("emojiID", isEqualTo: emojiID)
+        .getDocuments();
+    return snapshot;
   }
 
-  Future<DocumentSnapshot> getEmojiDetails(DocumentSnapshot a) async{
+  Future<DocumentSnapshot> getEmojiDetails(DocumentSnapshot a) async {
     CollectionReference emojisdb = databaseReference.collection("emojis");
     DocumentSnapshot snapshot = await emojisdb.document(a.documentID).get();
     return snapshot;
