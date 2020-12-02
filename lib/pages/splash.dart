@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:meanoji/pages/animated-wave.dart';
 import 'package:meanoji/pages/emoji-details.dart';
 import 'package:meanoji/pages/gradient-background.dart';
+import 'package:meanoji/pages/models/emojis.dart';
 import 'package:meanoji/pages/signup-dialog.dart';
 import 'package:meanoji/services/meanoji-shared-preferences.dart';
 
@@ -82,7 +83,7 @@ class SplashState extends State<Splash> {
         if (value != null)
           Navigator.pushReplacement(context, _createRoute(true));
         else
-          showIt(context, true);
+          showSignupDialog(context, true);
       });
 
       // Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => EmojiDetails()));
@@ -107,7 +108,7 @@ class SplashState extends State<Splash> {
   Route _createRoute(bool hasUsername) {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) =>
-          hasUsername ? EmojiDetails() : showIt(context, true),
+          hasUsername ? EmojiDetails() : showSignupDialog(context, true),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         var begin = Offset(0.0, 1.0);
         var end = Offset.zero;
@@ -124,7 +125,7 @@ class SplashState extends State<Splash> {
     );
   }
 
-  static Future showIt(BuildContext context, bool onSplash) {
+  static Future showSignupDialog(BuildContext context, bool onSplash) {
     return showGeneralDialog(
       context: context,
       barrierDismissible: true,

@@ -1,5 +1,7 @@
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:meanoji/pages/models/emojis.dart';
 import 'package:meanoji/pages/splash.dart';
 import 'package:meanoji/services/firebase-service.dart';
 import 'package:meanoji/services/meanoji-shared-preferences.dart';
@@ -12,7 +14,8 @@ class EmojiDetails extends StatefulWidget {
 
 class EmojiDetailsState extends State<EmojiDetails>
     with SingleTickerProviderStateMixin {
-  DocumentSnapshot snapshot;
+  //DocumentSnapshot snapshot;
+  List<DocumentSnapshot> emojiList;
 
   bool _enableComment = false;
   TextEditingController _commentController = new TextEditingController();
@@ -25,12 +28,17 @@ class EmojiDetailsState extends State<EmojiDetails>
   @override
   void initState() {
     super.initState();
-    Future<DocumentSnapshot> snapshot = FirebaseService().getEmoji();
-    snapshot.then((value) {
+    // Future<DocumentSnapshot> snapshot = FirebaseService().getEmoji();
+    // snapshot.then((value) {
+    //   setState(() {
+    //     this.snapshot = value;
+    //   });
+    //   _fetchEmojiComments();
+    // });
+    Emojis().fetchEmojisAsync(0, 3).then((onValue){
       setState(() {
-        this.snapshot = value;
+        emojiList = onValue;
       });
-      _fetchEmojiComments();
     });
 
     MeanojiPreferences.hasUserName().then((status) {
@@ -61,106 +69,130 @@ class EmojiDetailsState extends State<EmojiDetails>
   //   if (state == AppLifecycleState.resumed) {}
   // }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: NestedScrollView(
-        headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
-          return <Widget>[
-            SliverAppBar(
-              expandedHeight:
-                  MediaQuery.of(context).size.height * 0.24, //240.0,
-              floating: false,
-              pinned: true,
-              flexibleSpace: FlexibleSpaceBar(
-                  centerTitle: true,
-                  title: Text(
-                      snapshot != null
-                          ? snapshot.data["code"]
-                          : "oops! We do not know.",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14.0,
-                      )),
-                  background: snapshot != null
-                      ? Center(
-                          child: Container(
-                          width: MediaQuery.of(context).size.width,
-                          height: MediaQuery.of(context).size.height * 0.2,
-                          child: FittedBox(
-                            fit: BoxFit.contain,
-                            child: RichText(
-                                textAlign: TextAlign.center,
-                                text: TextSpan(
-                                  text: snapshot.data[
-                                      "moji"], //'🧭 🏳️\u200d🌈', // emoji characters
-                                  style: TextStyle(
-                                    fontFamily: 'EmojiOne',
-                                    //fontSize: 120,
-                                  ),
-                                )),
-                          ),
-                        ))
-                      : Image(
-                          image: new AssetImage('openmoji618/1F60A.png'),
-                          fit: BoxFit.cover,
-                        )),
-              actions: <Widget>[
-                IconButton(
-                  icon: Icon(Icons.search),
-                  onPressed: () {
-                    showSearchPage(context, EmojiSearchDelegate());
-                  },
-                ),
-              ],
-            ),
-          ];
+  Widget getCarousel(BuildContext mediaContext) {
+    if (emojiList != null && emojiList.length > 0) {
+      return CarouselSlider.builder(
+        scrollDirection: Axis.horizontal,
+        viewportFraction: 1.0,
+        aspectRatio: MediaQuery.of(mediaContext).size.aspectRatio,
+        onPageChanged: (index) {
+          _fetchEmojiComments(emojiList[index]);
+          if(index == emojiList.length - 2)
+            Emojis().fetchEmojisAsync(emojiList.length - 1, 3).then((onValue) {
+              setState(() {
+                emojiList.addAll(onValue);
+              });
+            });
         },
-        body: Center(
-            child: Column(
-          children: [
-            Expanded(child: _commentsListView(context)),
-            Padding(
-              padding: EdgeInsets.fromLTRB(15, 0, 15, 15),
-              child: TextField(
-                controller: _commentController,
-                readOnly: !_enableComment,
-                maxLines: null,
-                autofocus: false,
-                textInputAction: TextInputAction.send,
-                style:
-                    TextStyle(color: Colors.black, fontFamily: 'SFUIDisplay'),
-                decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.all(15),
-                  labelText: 'What does this emoji mean to you?',
-                  prefixIcon: Icon(Icons.comment),
-                  labelStyle: TextStyle(fontSize: 15),
-                  border: new OutlineInputBorder(
-                    borderRadius: new BorderRadius.circular(25.0),
-                    borderSide: new BorderSide(),
-                  ),
-                  suffixIcon: IconButton(
-                    icon: Icon(Icons.send),
-                    onPressed: () {
-                      _savecomment(_commentController.text, snapshot);
-                    },
-                  ),
-                ),
-                onSubmitted: (value) {
-                  _savecomment(value, snapshot);
-                },
-                onTap: () {
-                  _showSignupDialog(context);
+        itemCount: emojiList.length,
+        itemBuilder: (BuildContext context, int itemIndex) =>
+            Container(child: getEmojiDetails(emojiList[itemIndex])),
+      );
+    } else {
+      return Container();
+    }
+  }
+
+  Widget getEmojiDetails(DocumentSnapshot snapshot) {
+    return NestedScrollView(
+      headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+        return <Widget>[
+          SliverAppBar(
+            expandedHeight: MediaQuery.of(context).size.height * 0.24, //240.0,
+            floating: false,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+                centerTitle: true,
+                title: Text(
+                    snapshot != null
+                        ? snapshot.data["code"]
+                        : "oops! We do not know.",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14.0,
+                    )),
+                background: snapshot != null
+                    ? Center(
+                        child: Container(
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height * 0.2,
+                        child: FittedBox(
+                          fit: BoxFit.contain,
+                          child: RichText(
+                              textAlign: TextAlign.center,
+                              text: TextSpan(
+                                text: snapshot.data[
+                                    "moji"], //'🧭 🏳️\u200d🌈', // emoji characters
+                                style: TextStyle(
+                                  fontFamily: 'EmojiOne',
+                                  //fontSize: 120,
+                                ),
+                              )),
+                        ),
+                      ))
+                    : Image(
+                        image: new AssetImage('openmoji618/1F60A.png'),
+                        fit: BoxFit.cover,
+                      )),
+            actions: <Widget>[
+              IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () {
+                  showSearchPage(context, EmojiSearchDelegate());
                 },
               ),
+            ],
+          ),
+        ];
+      },
+      body: Center(
+          child: Column(
+        children: [
+          Expanded(child: _commentsListView(context)),
+          Padding(
+            padding: EdgeInsets.fromLTRB(15, 0, 15, 15),
+            child: TextField(
+              controller: _commentController,
+              readOnly: !_enableComment,
+              maxLines: null,
+              autofocus: false,
+              textInputAction: TextInputAction.send,
+              style: TextStyle(color: Colors.black, fontFamily: 'SFUIDisplay'),
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.all(15),
+                labelText: 'What does this emoji mean to you?',
+                prefixIcon: Icon(Icons.comment),
+                labelStyle: TextStyle(fontSize: 15),
+                border: new OutlineInputBorder(
+                  borderRadius: new BorderRadius.circular(25.0),
+                  borderSide: new BorderSide(),
+                ),
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.send),
+                  onPressed: () {
+                    _savecomment(_commentController.text, snapshot);
+                  },
+                ),
+              ),
+              onSubmitted: (value) {
+                _savecomment(value, snapshot);
+              },
+              onTap: () {
+                _showSignupDialog(context);
+              },
             ),
-          ],
-        )),
-      ),
+          ),
+        ],
+      )),
     );
   }
 
-  void _fetchEmojiComments() {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(body: getCarousel(context));
+  }
+
+  void _fetchEmojiComments(DocumentSnapshot snapshot) {
     if (snapshot != null && snapshot.documentID.isNotEmpty) {
       FirebaseService()
           .getCommentsForEmoji(snapshot.documentID)
@@ -232,16 +264,18 @@ class EmojiDetailsState extends State<EmojiDetails>
 
     if (selected != null) {
       setState(() {
-        this.snapshot = selected;
+        emojiList.clear();
+        emojiList.add(selected);
+        //this.snapshot = selected;
         this.comments = null;
       });
-      _fetchEmojiComments();
+      _fetchEmojiComments(selected);
     }
   }
 
   void _showSignupDialog(BuildContext context) async {
     if (!_enableComment) {
-      await SplashState.showIt(context, false).then((val) {
+      await SplashState.showSignupDialog(context, false).then((val) {
         MeanojiPreferences.hasUserName().then((status) {
           setState(() {
             _enableComment = status;
