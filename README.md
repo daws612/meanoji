@@ -1,6 +1,6 @@
 # meanoji
 
-A new Flutter project.
+Meaning of emojis
 
 ## Getting Started
 

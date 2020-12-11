@@ -88,21 +88,21 @@ class EmojiSearchDelegate extends SearchDelegate<DocumentSnapshot> {
   @override
   Widget buildSuggestions(BuildContext context) {
     return StreamBuilder(
-      stream: Firestore.instance.collection('emojis').snapshots(),
+      stream: FirebaseFirestore.instance.collection('emojis').snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return new Text('Loading...');
 
         final results = snapshot.data.documents.where(
-            (DocumentSnapshot a) => a.data['base'].toString().contains(query));
+            (DocumentSnapshot a) => a.data()['base'].toString().contains(query));
 
         
         return ListView(
           children: results
               .map<Widget>((a) => ListTile(
-                leading: Text(a.data['moji'].toString(), style: TextStyle(fontSize: 28),),
-                title: Text(a.data['code'].toString()),
+                leading: Text(a.data()['moji'].toString(), style: TextStyle(fontSize: 28),),
+                title: Text(a.data()['code'].toString()),
                 onTap: () {
-                    print(a.data['code'].toString());
+                    print(a.data()['code'].toString());
                     //_getEmojiDetails(a);
                     this.close(context, a);
                   },
@@ -119,14 +119,14 @@ class EmojiSearchDelegate extends SearchDelegate<DocumentSnapshot> {
     assert(theme != null);
     return theme.copyWith(
         inputDecorationTheme: InputDecorationTheme(
-            hintStyle: TextStyle(color: theme.primaryTextTheme.title.color)),
+            hintStyle: TextStyle(color: theme.primaryTextTheme.headline6.color)),
         primaryColor: theme.primaryColor,
         primaryIconTheme: theme.primaryIconTheme,
         primaryColorBrightness: theme.primaryColorBrightness,
         primaryTextTheme: theme.primaryTextTheme,
         textTheme: theme.textTheme.copyWith(
-            title: theme.textTheme.title
-                .copyWith(color: theme.primaryTextTheme.title.color)));
+            headline6: theme.textTheme.headline6
+                .copyWith(color: theme.primaryTextTheme.headline6.color)));
   }
 
   _getEmojiDetails(DocumentSnapshot a) {

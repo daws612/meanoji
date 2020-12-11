@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:meanoji/services/meanoji-shared-preferences.dart';
 
 class FirebaseService {
-  final databaseReference = Firestore.instance;
+  final databaseReference = FirebaseFirestore.instance;
 
   Future<DocumentSnapshot> getEmoji() async {
     CollectionReference emojisdb = databaseReference.collection("emojis");
@@ -14,7 +14,7 @@ class FirebaseService {
     //     print(snapshot.data);
     // });
     DocumentSnapshot snapshot =
-        await emojisdb.document("1WNFqYSsLHFsRttuuqoV").get();
+        await emojisdb.doc("1WNFqYSsLHFsRttuuqoV").get();
     return snapshot;
     //.then((DocumentSnapshot snapshot) {
     //print(snapshot.data);
@@ -32,7 +32,7 @@ class FirebaseService {
       'createdAt': DateTime.now().toUtc().millisecondsSinceEpoch,
       'username': await MeanojiPreferences.getUserName()
     });
-    print(ref.documentID);
+    print(ref.id);
   }
 
   Future<bool> saveUser(String userName, String email) async {
@@ -44,8 +44,8 @@ class FirebaseService {
       'email': email,
       'createdAt': DateTime.now().toUtc().millisecondsSinceEpoch,
     });
-    print(ref.documentID);
-    if (ref.documentID != null) {
+    print(ref.id);
+    if (ref.id != null) {
       MeanojiPreferences.setUserName(userName);
       return true;
     }
@@ -56,8 +56,8 @@ class FirebaseService {
     //1 is emojiID
     await databaseReference
         .collection("comments")
-        .document("1")
-        .setData({'comment': 'New comment for emoji1', 'username': 'dawstest'});
+        .doc("1")
+        .set({'comment': 'New comment for emoji1', 'username': 'dawstest'});
 
     //This creates random document id
     // DocumentReference ref = await databaseReference.collection("comments").add({
@@ -71,13 +71,13 @@ class FirebaseService {
     QuerySnapshot snapshot = await databaseReference
         .collection("comments")
         .where("emojiID", isEqualTo: emojiID)
-        .getDocuments();
+        .get();
     return snapshot;
   }
 
   Future<DocumentSnapshot> getEmojiDetails(DocumentSnapshot a) async {
     CollectionReference emojisdb = databaseReference.collection("emojis");
-    DocumentSnapshot snapshot = await emojisdb.document(a.documentID).get();
+    DocumentSnapshot snapshot = await emojisdb.doc(a.id).get();
     return snapshot;
   }
 }

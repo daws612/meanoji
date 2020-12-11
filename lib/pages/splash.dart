@@ -1,13 +1,20 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_analytics/observer.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:meanoji/pages/animated-wave.dart';
-import 'package:meanoji/pages/emoji-details.dart';
-import 'package:meanoji/pages/gradient-background.dart';
-import 'package:meanoji/pages/models/emojis.dart';
-import 'package:meanoji/pages/signup-dialog.dart';
+import 'animated-wave.dart';
+import 'emoji-details.dart';
+import 'gradient-background.dart';
+import 'signup-dialog.dart';
 import 'package:meanoji/services/meanoji-shared-preferences.dart';
 
 class Splash extends StatefulWidget {
+  Splash({Key key, this.analytics, this.observer})
+      : super(key: key);
+
+  final FirebaseAnalytics analytics;
+  final FirebaseAnalyticsObserver observer;
+
   @override
   State<StatefulWidget> createState() => new SplashState();
 }

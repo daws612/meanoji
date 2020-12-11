@@ -5,6 +5,7 @@ import 'package:meanoji/pages/models/emojis.dart';
 import 'package:meanoji/pages/splash.dart';
 import 'package:meanoji/services/firebase-service.dart';
 import 'package:meanoji/services/meanoji-shared-preferences.dart';
+
 import 'emoji-search-delegate.dart';
 
 class EmojiDetails extends StatefulWidget {
@@ -25,6 +26,9 @@ class EmojiDetailsState extends State<EmojiDetails>
   Animation<double> opacityAnim;
   Animation<double> verticalOffsetAnim;
 
+  int startIdx = 0;
+  bool fetchingComments = false;
+
   @override
   void initState() {
     super.initState();
@@ -35,7 +39,7 @@ class EmojiDetailsState extends State<EmojiDetails>
     //   });
     //   _fetchEmojiComments();
     // });
-    Emojis().fetchEmojisAsync(0, 3).then((onValue){
+    Emojis().fetchEmojisAsync(0, 3, null).then((onValue) {
       setState(() {
         emojiList = onValue;
       });
@@ -72,18 +76,25 @@ class EmojiDetailsState extends State<EmojiDetails>
   Widget getCarousel(BuildContext mediaContext) {
     if (emojiList != null && emojiList.length > 0) {
       return CarouselSlider.builder(
-        scrollDirection: Axis.horizontal,
-        viewportFraction: 1.0,
-        aspectRatio: MediaQuery.of(mediaContext).size.aspectRatio,
-        onPageChanged: (index) {
-          _fetchEmojiComments(emojiList[index]);
-          if(index == emojiList.length - 2)
-            Emojis().fetchEmojisAsync(emojiList.length - 1, 3).then((onValue) {
-              setState(() {
-                emojiList.addAll(onValue);
-              });
-            });
-        },
+        options: CarouselOptions(
+            scrollDirection: Axis.horizontal,
+            initialPage: 0,
+            enableInfiniteScroll: false,
+            viewportFraction: 1.0,
+            aspectRatio: MediaQuery.of(mediaContext).size.aspectRatio,
+            onPageChanged: (index, reason) {
+              _fetchEmojiComments(emojiList[index]);
+              if (index == emojiList.length - 2 || emojiList.length < 3) {
+                startIdx = emojiList.length < 3 ? 0 : emojiList.length - 1;
+                DocumentSnapshot current =
+                    index < startIdx ? emojiList[startIdx] : emojiList[index];
+                Emojis().fetchEmojisAsync(startIdx, 3, current).then((onValue) {
+                  setState(() {
+                    emojiList.addAll(onValue);
+                  });
+                });
+              }
+            }),
         itemCount: emojiList.length,
         itemBuilder: (BuildContext context, int itemIndex) =>
             Container(child: getEmojiDetails(emojiList[itemIndex])),
@@ -98,15 +109,16 @@ class EmojiDetailsState extends State<EmojiDetails>
       headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
         return <Widget>[
           SliverAppBar(
-            expandedHeight: MediaQuery.of(context).size.height * 0.24, //240.0,
+            expandedHeight: MediaQuery.of(context).size.height * 0.24,
+            //240.0,
             floating: false,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
                 centerTitle: true,
                 title: Text(
                     snapshot != null
-                        ? snapshot.data["code"]
-                        : "oops! We do not know.",
+                        ? snapshot.data()["code"]
+                        : "oops! We do not know that one.",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 14.0,
@@ -121,11 +133,11 @@ class EmojiDetailsState extends State<EmojiDetails>
                           child: RichText(
                               textAlign: TextAlign.center,
                               text: TextSpan(
-                                text: snapshot.data[
+                                text: snapshot.data()[
                                     "moji"], //'🧭 🏳️\u200d🌈', // emoji characters
                                 style: TextStyle(
                                   fontFamily: 'EmojiOne',
-                                  //fontSize: 120,
+                                  fontSize: 120,
                                 ),
                               )),
                         ),
@@ -193,29 +205,32 @@ class EmojiDetailsState extends State<EmojiDetails>
   }
 
   void _fetchEmojiComments(DocumentSnapshot snapshot) {
-    if (snapshot != null && snapshot.documentID.isNotEmpty) {
-      FirebaseService()
-          .getCommentsForEmoji(snapshot.documentID)
-          .then((comments) {
+    if (snapshot != null && snapshot.id.isNotEmpty) {
+      setState(() {
+        fetchingComments = true;
+      });
+      FirebaseService().getCommentsForEmoji(snapshot.id).then((comments) {
         setState(() {
           this.comments = comments;
+          fetchingComments = false;
         });
       });
     }
   }
 
   Widget _commentsListView(BuildContext context) {
-    if (comments != null && comments.documents.isNotEmpty) {
+    if (comments != null && comments.docs.isNotEmpty && !fetchingComments) {
       _animecontroller.reset();
       _animecontroller.forward();
       return ListView.builder(
         padding: EdgeInsets.all(0),
-        itemCount: comments.documents.length,
+        itemCount: comments.docs.length,
         itemBuilder: (context, index) {
           return Card(
             child: ListTile(
               //leading: new Image.asset('openmoji618/1F60A.png'),
-              title: Text(comments.documents[index].data["comment"]),
+              title: Text(comments.docs[index].data()["comment"]),
+              trailing: Text("~" + comments.docs[index].data()["username"]),
             ),
           );
           //TODO this animation causes infinite loop
@@ -245,13 +260,16 @@ class EmojiDetailsState extends State<EmojiDetails>
         },
       );
     } else {
-      return Center(child: Text("No comments yet. Be the first one to add!"));
+      if(!fetchingComments)
+        return Center(child: Text("No comments yet. Be the first one to add!"));
+      else
+        return _showCommentsLoader();
     }
   }
 
   void _savecomment(String comment, DocumentSnapshot snapshot) {
     FirebaseService()
-        .saveComment(comment, snapshot.data["unicode"], snapshot.documentID);
+        .saveComment(comment, snapshot.data()["unicode"], snapshot.id);
   }
 
   //Shows Search result
@@ -268,6 +286,11 @@ class EmojiDetailsState extends State<EmojiDetails>
         emojiList.add(selected);
         //this.snapshot = selected;
         this.comments = null;
+        Emojis().fetchEmojisAsync(0, 3, selected).then((onValue) {
+          setState(() {
+            emojiList.addAll(onValue);
+          });
+        });
       });
       _fetchEmojiComments(selected);
     }
@@ -283,5 +306,12 @@ class EmojiDetailsState extends State<EmojiDetails>
         });
       });
     }
+  }
+
+  _showCommentsLoader() {
+    return Container(
+      alignment: Alignment.center,
+      child: CircularProgressIndicator(),
+    );
   }
 }

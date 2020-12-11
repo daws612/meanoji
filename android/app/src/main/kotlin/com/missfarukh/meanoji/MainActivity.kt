@@ -1,4 +1,4 @@
-package com.msupa.meanoji
+package com.missfarukh.meanoji
 
 import io.flutter.embedding.android.FlutterActivity
 

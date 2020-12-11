@@ -13,28 +13,28 @@ class Emojis {
 
   void fetchEmojis() async {
     QuerySnapshot emojis =
-        await Firestore.instance.collection("emojis").limit(15).getDocuments();
-    allEmojis = emojis.documents;
+        await FirebaseFirestore.instance.collection("emojis").limit(15).get();
+    allEmojis = emojis.docs;
   }
 
   Future<List<DocumentSnapshot>> fetchEmojisAsync(
-      int startFrom, int pageLength) async {
+      int startFrom, int pageLength, DocumentSnapshot continueFromCurrent) async {
     QuerySnapshot emojis;
-    if (startFrom > 0) {
-      emojis = await Firestore.instance
+    if (startFrom >= 0 && continueFromCurrent != null) {
+      emojis = await FirebaseFirestore.instance
           .collection("emojis")
-          .startAfterDocument(allEmojis[startFrom])
           .orderBy("base")
+          .startAfterDocument(continueFromCurrent)
           .limit(pageLength)
-          .getDocuments();
+          .get();
     } else {
-      emojis = await Firestore.instance
+      emojis = await FirebaseFirestore.instance
           .collection("emojis")
           .orderBy("base")
           .limit(pageLength)
-          .getDocuments();
+          .get();
     }
-    allEmojis != null ? allEmojis.addAll(emojis.documents) : allEmojis = emojis.documents;
-    return emojis.documents;
+    allEmojis != null ? allEmojis.addAll(emojis.docs) : allEmojis = emojis.docs;
+    return emojis.docs;
   }
 }
