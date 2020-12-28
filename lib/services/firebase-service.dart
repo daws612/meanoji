@@ -22,7 +22,7 @@ class FirebaseService {
     // });
   }
 
-  void saveComment(
+  Future<bool> saveComment(
       String comment, String emojiUniCode, String emojiDocumentID) async {
     //This creates random document id
     DocumentReference ref = await databaseReference.collection("comments").add({
@@ -33,6 +33,10 @@ class FirebaseService {
       'username': await MeanojiPreferences.getUserName()
     });
     print(ref.id);
+
+    if(ref.id != null)
+        return true;
+    return false;
   }
 
   Future<bool> saveUser(String userName, String email) async {

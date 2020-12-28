@@ -32,7 +32,11 @@ class EmojiDetailsState extends State<EmojiDetails>
   bool fetchingComments = false;
 
   BannerAd _bannerAd;
-  InterstitialAd interstitialAd;
+  InterstitialAd _interstitialAd;
+  bool _isInterstitialAdReady;
+
+  DocumentSnapshot currentEmoji;
+  String _errorMsg = null;
 
   void _loadBannerAd() {
     _bannerAd
@@ -53,11 +57,20 @@ class EmojiDetailsState extends State<EmojiDetails>
     );
 
     _bannerAd = BannerAd(
-      adUnitId: AdManager.bannerAdUnitId, //"ca-app-pub-3940256099942544/6300978111",
+      adUnitId:
+          AdManager.bannerAdUnitId, //"ca-app-pub-3940256099942544/6300978111",
       size: AdSize.smartBanner,
       targetingInfo: targetingInfo,
     );
     //_loadBannerAd();
+    _isInterstitialAdReady = false;
+
+    _interstitialAd = InterstitialAd(
+        adUnitId: AdManager.interstitialAdUnitId,
+        listener: _onInterstitialAdEvent,
+        targetingInfo: targetingInfo);
+    _interstitialAd.load();
+
     // Future<DocumentSnapshot> snapshot = FirebaseService().getEmoji();
     // snapshot.then((value) {
     //   setState(() {
@@ -68,6 +81,7 @@ class EmojiDetailsState extends State<EmojiDetails>
     Emojis().fetchEmojisAsync(0, 3, null).then((onValue) {
       setState(() {
         emojiList = onValue;
+        _fetchEmojiComments(emojiList[0]);
       });
     });
 
@@ -84,9 +98,27 @@ class EmojiDetailsState extends State<EmojiDetails>
     // });
   }
 
+  void _onInterstitialAdEvent(MobileAdEvent event) {
+    switch (event) {
+      case MobileAdEvent.loaded:
+        _isInterstitialAdReady = true;
+        break;
+      case MobileAdEvent.failedToLoad:
+        _isInterstitialAdReady = false;
+        print('Failed to load an interstitial ad');
+        break;
+      case MobileAdEvent.closed:
+        _fetchEmojiComments(currentEmoji);
+        break;
+      default:
+      // do nothing
+    }
+  }
+
   @override
   void dispose() {
     _bannerAd?.dispose();
+    _interstitialAd?.dispose();
     _commentController.dispose();
     super.dispose();
   }
@@ -112,6 +144,9 @@ class EmojiDetailsState extends State<EmojiDetails>
             height: MediaQuery.of(context).size.height,
             enlargeCenterPage: true,
             onPageChanged: (index, reason) {
+              setState(() {
+                _errorMsg = null;
+              });
               _fetchEmojiComments(emojiList[index]);
               if (index == emojiList.length - 2) {
                 startIdx = emojiList.length < 3 ? 0 : emojiList.length - 1;
@@ -200,6 +235,7 @@ class EmojiDetailsState extends State<EmojiDetails>
               textInputAction: TextInputAction.send,
               style: TextStyle(color: Colors.black, fontFamily: 'SFUIDisplay'),
               decoration: InputDecoration(
+                  errorText: _errorMsg != null ? _errorMsg : null,
                 contentPadding: const EdgeInsets.all(15),
                 labelText: 'What does this emoji mean to you?',
                 prefixIcon: Icon(Icons.comment),
@@ -219,6 +255,9 @@ class EmojiDetailsState extends State<EmojiDetails>
                 _savecomment(value, snapshot);
               },
               onTap: () {
+                setState(() {
+                  _errorMsg = null;
+                });
                 _showSignupDialog(context);
               },
             ),
@@ -241,6 +280,7 @@ class EmojiDetailsState extends State<EmojiDetails>
 
   void _fetchEmojiComments(DocumentSnapshot snapshot) {
     if (snapshot != null && snapshot.id.isNotEmpty) {
+      print("Fetching comments");
       setState(() {
         fetchingComments = true;
       });
@@ -295,7 +335,7 @@ class EmojiDetailsState extends State<EmojiDetails>
         },
       );
     } else {
-      if(!fetchingComments)
+      if (!fetchingComments)
         return Center(child: Text("No comments yet. Be the first one to add!"));
       else
         return _showCommentsLoader();
@@ -304,7 +344,20 @@ class EmojiDetailsState extends State<EmojiDetails>
 
   void _savecomment(String comment, DocumentSnapshot snapshot) {
     FirebaseService()
-        .saveComment(comment, snapshot.data()["unicode"], snapshot.id);
+        .saveComment(comment, snapshot.data()["unicode"], snapshot.id)
+        .then((success) {
+      if (success) _commentController.clear();
+      else {
+        setState(() {
+          _errorMsg = "Oops! Could not post your comment.";
+        });
+      }
+    });
+
+    if (_isInterstitialAdReady) {
+      currentEmoji = snapshot;
+      _interstitialAd.show();
+    }
   }
 
   //Shows Search result
