@@ -1,11 +1,13 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
 import 'package:meanoji/pages/models/emojis.dart';
 import 'package:meanoji/pages/splash.dart';
 import 'package:meanoji/services/firebase-service.dart';
 import 'package:meanoji/services/meanoji-shared-preferences.dart';
 
+import '../ad_manager.dart';
 import 'emoji-search-delegate.dart';
 
 class EmojiDetails extends StatefulWidget {
@@ -29,9 +31,33 @@ class EmojiDetailsState extends State<EmojiDetails>
   int startIdx = 0;
   bool fetchingComments = false;
 
+  BannerAd _bannerAd;
+  InterstitialAd interstitialAd;
+
+  void _loadBannerAd() {
+    _bannerAd
+      ..load()
+      ..show(
+          anchorOffset: 0.0,
+          horizontalCenterOffset: 0.0,
+          anchorType: AnchorType.bottom);
+  }
+
   @override
   void initState() {
     super.initState();
+    FirebaseAdMob.instance.initialize(appId: AdManager.appId);
+
+    MobileAdTargetingInfo targetingInfo = MobileAdTargetingInfo(
+      testDevices: <String>["CF7597A527C60AAD88F6682BF981ED90"],
+    );
+
+    _bannerAd = BannerAd(
+      adUnitId: AdManager.bannerAdUnitId, //"ca-app-pub-3940256099942544/6300978111",
+      size: AdSize.smartBanner,
+      targetingInfo: targetingInfo,
+    );
+    //_loadBannerAd();
     // Future<DocumentSnapshot> snapshot = FirebaseService().getEmoji();
     // snapshot.then((value) {
     //   setState(() {
@@ -60,8 +86,9 @@ class EmojiDetailsState extends State<EmojiDetails>
 
   @override
   void dispose() {
-    super.dispose();
+    _bannerAd?.dispose();
     _commentController.dispose();
+    super.dispose();
   }
 
   // @override
@@ -81,10 +108,12 @@ class EmojiDetailsState extends State<EmojiDetails>
             initialPage: 0,
             enableInfiniteScroll: false,
             viewportFraction: 1.0,
-            aspectRatio: MediaQuery.of(mediaContext).size.aspectRatio,
+            //aspectRatio: MediaQuery.of(mediaContext).size.aspectRatio,
+            height: MediaQuery.of(context).size.height,
+            enlargeCenterPage: true,
             onPageChanged: (index, reason) {
               _fetchEmojiComments(emojiList[index]);
-              if (index == emojiList.length - 2 || emojiList.length < 3) {
+              if (index == emojiList.length - 2) {
                 startIdx = emojiList.length < 3 ? 0 : emojiList.length - 1;
                 DocumentSnapshot current =
                     index < startIdx ? emojiList[startIdx] : emojiList[index];
@@ -194,6 +223,12 @@ class EmojiDetailsState extends State<EmojiDetails>
               },
             ),
           ),
+          // Container(
+          //     height: AdManager.getMargin(MediaQuery.of(context).size.height),
+          //     child: Center(
+          //       child: Text("Ad loading ..."),
+          //     )
+          // )
         ],
       )),
     );
@@ -286,13 +321,14 @@ class EmojiDetailsState extends State<EmojiDetails>
         emojiList.add(selected);
         //this.snapshot = selected;
         this.comments = null;
-        Emojis().fetchEmojisAsync(0, 3, selected).then((onValue) {
-          setState(() {
-            emojiList.addAll(onValue);
-          });
-        });
       });
       _fetchEmojiComments(selected);
+
+      Emojis().fetchEmojisAsync(0, 3, selected).then((onValue) {
+        setState(() {
+          emojiList.addAll(onValue);
+        });
+      });
     }
   }
 

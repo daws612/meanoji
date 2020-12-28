@@ -9,8 +9,7 @@ import 'signup-dialog.dart';
 import 'package:meanoji/services/meanoji-shared-preferences.dart';
 
 class Splash extends StatefulWidget {
-  Splash({Key key, this.analytics, this.observer})
-      : super(key: key);
+  Splash({Key key, this.analytics, this.observer}) : super(key: key);
 
   final FirebaseAnalytics analytics;
   final FirebaseAnalyticsObserver observer;
@@ -135,25 +134,48 @@ class SplashState extends State<Splash> {
   static Future showSignupDialog(BuildContext context, bool onSplash) {
     return showGeneralDialog(
       context: context,
-      barrierDismissible: true,
       barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-      barrierColor: Colors.black.withOpacity(0.2),
-      transitionDuration: const Duration(milliseconds: 1000),
-      transitionBuilder: (context, a1, a2, widget) {
-        return Padding(
-            padding: EdgeInsets.fromLTRB(50, 250, 50, 310),
-            child: Card(
-                shape: RoundedRectangleBorder(
-                  side: BorderSide(color: Colors.white70, width: 1),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                elevation: 3,
-                child: Center(
-                  child: SignupDialogContent(isOnSplash: onSplash),
-                )));
-      },
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: const Duration(milliseconds: 500),
+      barrierDismissible: true,
       pageBuilder: (BuildContext context, Animation animation,
-          Animation secondaryAnimation) {},
+          Animation secondaryAnimation) {
+        return Align(
+          alignment: Alignment.center,
+          child: Card(
+            child: SignupDialogContent(isOnSplash: onSplash),
+          ),
+        );
+      },
+      transitionBuilder: (_, anim, __, child) {
+        return ScaleTransition(
+          alignment: Alignment.bottomCenter, // add this
+          scale: anim,
+          child: child,
+        );
+      },
     );
+    // return showGeneralDialog(
+    //   context: context,
+    //   barrierDismissible: true,
+    //   barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+    //   barrierColor: Colors.black.withOpacity(0.2),
+    //   transitionDuration: const Duration(milliseconds: 1000),
+    //   transitionBuilder: (context, a1, a2, widget) {
+    //     return Padding(
+    //         padding: EdgeInsets.fromLTRB(50, 250, 50, 310),
+    //         child: Card(
+    //             shape: RoundedRectangleBorder(
+    //               side: BorderSide(color: Colors.white70, width: 1),
+    //               borderRadius: BorderRadius.circular(15),
+    //             ),
+    //             elevation: 3,
+    //             child: Center(
+    //               child: SignupDialogContent(isOnSplash: onSplash),
+    //             )));
+    //   },
+    //   pageBuilder: (BuildContext context, Animation animation,
+    //       Animation secondaryAnimation) {},
+    // );
   }
 }

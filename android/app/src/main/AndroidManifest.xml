@@ -8,6 +8,11 @@
     <application
         android:label="meanoji"
         android:icon="@mipmap/ic_launcher">
+
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-7474065387585598~6441078248"/>
+
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"

@@ -4,9 +4,7 @@ import 'package:meanoji/pages/emoji-details.dart';
 import 'package:meanoji/services/firebase-service.dart';
 
 class SignupDialogContent extends StatefulWidget {
-  SignupDialogContent({
-    Key key, this.isOnSplash
-  }) : super(key: key);
+  SignupDialogContent({Key key, this.isOnSplash}) : super(key: key);
   final bool isOnSplash;
 
   @override
@@ -36,6 +34,7 @@ class _SignupDialogContentState extends State<SignupDialogContent> {
       // color: Colors.white,
       child: Form(
           child: ListView(
+        shrinkWrap: true,
         padding: EdgeInsets.all(0),
         children: [
           Text(
@@ -169,7 +168,7 @@ class _SignupDialogContentState extends State<SignupDialogContent> {
 
   void enterAppFromDialog(BuildContext context) {
     Navigator.of(context, rootNavigator: true).pop();
-    if(widget.isOnSplash)
+    if (widget.isOnSplash)
       Navigator.pushReplacement(context, _createRoute(true));
   }
 

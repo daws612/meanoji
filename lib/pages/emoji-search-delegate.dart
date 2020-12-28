@@ -93,7 +93,7 @@ class EmojiSearchDelegate extends SearchDelegate<DocumentSnapshot> {
         if (!snapshot.hasData) return new Text('Loading...');
 
         final results = snapshot.data.documents.where(
-            (DocumentSnapshot a) => a.data()['base'].toString().contains(query));
+            (DocumentSnapshot a) => a.data()['moji'].toString().contains(query) || a.data()['base'].toString().contains(query));
 
         
         return ListView(
